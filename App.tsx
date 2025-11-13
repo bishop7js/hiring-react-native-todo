@@ -1,16 +1,9 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import { NewAppScreen } from '@react-native/new-app-screen';
 import { StatusBar, StyleSheet, useColorScheme, View, Text } from 'react-native';
 import {
   SafeAreaProvider,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import TodolistScreen from './src/screens/TodolistScreen';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -28,7 +21,7 @@ function AppContent() {
 
   return (
     <View style={styles.container}>
-      <Text>Type B Assesment</Text>
+      <TodolistScreen />
     </View>
   );
 }
