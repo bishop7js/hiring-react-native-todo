@@ -51,9 +51,12 @@ const TodolistScreen = () => {
     ]);
 
     const [modalVisible, setModalVisible] = useState(false);
+    const [editModalVisible, setEditModalVisible] = useState(false);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const [taskToDelete, setTaskToDelete] = useState(null);
+    const [taskToEdit, setTaskToEdit] = useState(null);
     const [newTaskText, setNewTaskText] = useState("");
+    const [editTaskText, setEditTaskText] = useState("");
 
     const toggleTask = (id) => {
         setTasks((prevTasks) =>
@@ -75,6 +78,33 @@ const TodolistScreen = () => {
             setNewTaskText("");
             setModalVisible(false);
         }
+    };
+
+    const handleEditPress = (task) => {
+        setTaskToEdit(task);
+        setEditTaskText(task.text);
+        setEditModalVisible(true);
+    };
+
+    const saveEdit = () => {
+        if (editTaskText.trim() && taskToEdit) {
+            setTasks((prevTasks) =>
+                prevTasks.map((task) =>
+                    task.id === taskToEdit.id
+                        ? { ...task, text: editTaskText.trim(), timestamp: "edited just now" }
+                        : task
+                )
+            );
+            setEditModalVisible(false);
+            setTaskToEdit(null);
+            setEditTaskText("");
+        }
+    };
+
+    const cancelEdit = () => {
+        setEditModalVisible(false);
+        setTaskToEdit(null);
+        setEditTaskText("");
     };
 
     const handleDeletePress = (task) => {
@@ -133,13 +163,22 @@ const TodolistScreen = () => {
                     </Text>
                 </View>
             </TouchableOpacity>
-            <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => handleDeletePress(item)}
-                activeOpacity={0.7}
-            >
-                <Text style={styles.deleteIcon}>🗑️</Text>
-            </TouchableOpacity>
+            <View style={styles.actionButtons}>
+                <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => handleEditPress(item)}
+                    activeOpacity={0.7}
+                >
+                    <Text style={styles.editIcon}>✏️</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => handleDeletePress(item)}
+                    activeOpacity={0.7}
+                >
+                    <Text style={styles.deleteIcon}>🗑️</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 
@@ -199,6 +238,42 @@ const TodolistScreen = () => {
                                 onPress={addTask}
                             >
                                 <Text style={styles.addTaskButtonText}>Add</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Edit Task Modal */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={editModalVisible}
+                onRequestClose={cancelEdit}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Edit Task</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Enter task description"
+                            value={editTaskText}
+                            onChangeText={setEditTaskText}
+                            autoFocus
+                            multiline
+                        />
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.cancelButton]}
+                                onPress={cancelEdit}
+                            >
+                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.saveButton]}
+                                onPress={saveEdit}
+                            >
+                                <Text style={styles.saveButtonText}>Save</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -314,9 +389,16 @@ const styles = StyleSheet.create({
     timestampCompleted: {
         color: "#999999",
     },
-    deleteButton: {
+    actionButtons: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    actionButton: {
         padding: 8,
-        marginLeft: 8,
+        marginLeft: 4,
+    },
+    editIcon: {
+        fontSize: 20,
     },
     deleteIcon: {
         fontSize: 20,
@@ -398,6 +480,14 @@ const styles = StyleSheet.create({
         backgroundColor: "#51ACB4",
     },
     addTaskButtonText: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#FFFFFF",
+    },
+    saveButton: {
+        backgroundColor: "#51ACB4",
+    },
+    saveButtonText: {
         fontSize: 16,
         fontWeight: "600",
         color: "#FFFFFF",
