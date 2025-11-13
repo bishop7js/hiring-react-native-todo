@@ -51,6 +51,8 @@ const TodolistScreen = () => {
     ]);
 
     const [modalVisible, setModalVisible] = useState(false);
+    const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+    const [taskToDelete, setTaskToDelete] = useState(null);
     const [newTaskText, setNewTaskText] = useState("");
 
     const toggleTask = (id) => {
@@ -75,64 +77,87 @@ const TodolistScreen = () => {
         }
     };
 
-    const renderTask = ({ item }) => (
-        <TouchableOpacity
-            style={styles.taskItem}
-            onPress={() => toggleTask(item.id)}
-            activeOpacity={0.7}
-        >
-            <View
-                style={[
-                    styles.checkbox,
-                    item.completed && styles.checkboxCompleted,
-                ]}
-            >
-                {item.completed && (
-                    <Text style={styles.checkmark}>✓</Text>
-                )}
-            </View>
-            <View style={styles.taskContent}>
-                <Text
-                    style={[
-                        styles.taskText,
-                        item.completed && styles.taskTextCompleted,
-                    ]}
-                >
-                    {item.text}
-                </Text>
-                <Text
-                    style={[
-                        styles.timestamp,
-                        item.completed && styles.timestampCompleted,
-                    ]}
-                >
-                    {item.timestamp}
-                </Text>
-            </View>
-        </TouchableOpacity>
-    );
+    const handleDeletePress = (task) => {
+        setTaskToDelete(task);
+        setDeleteModalVisible(true);
+    };
 
-    const renderSeparator = () => <View style={styles.separator} />;
+    const confirmDelete = () => {
+        if (taskToDelete) {
+            setTasks((prevTasks) =>
+                prevTasks.filter((task) => task.id !== taskToDelete.id)
+            );
+            setDeleteModalVisible(false);
+            setTaskToDelete(null);
+        }
+    };
+
+    const cancelDelete = () => {
+        setDeleteModalVisible(false);
+        setTaskToDelete(null);
+    };
+
+    const renderTask = ({ item }) => (
+        <View style={styles.taskItem}>
+            <TouchableOpacity
+                style={styles.taskTouchable}
+                onPress={() => toggleTask(item.id)}
+                activeOpacity={0.7}
+            >
+                <View
+                    style={[
+                        styles.checkbox,
+                        item.completed && styles.checkboxCompleted,
+                    ]}
+                >
+                    {item.completed && (
+                        <Text style={styles.checkmark}>✓</Text>
+                    )}
+                </View>
+                <View style={styles.taskContent}>
+                    <Text
+                        style={[
+                            styles.taskText,
+                            item.completed && styles.taskTextCompleted,
+                        ]}
+                    >
+                        {item.text}
+                    </Text>
+                    <Text
+                        style={[
+                            styles.timestamp,
+                            item.completed && styles.timestampCompleted,
+                        ]}
+                    >
+                        {item.timestamp}
+                    </Text>
+                </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => handleDeletePress(item)}
+                activeOpacity={0.7}
+            >
+                <Text style={styles.deleteIcon}>🗑️</Text>
+            </TouchableOpacity>
+        </View>
+    );
 
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" />
             
-            {/* Header */}
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Tasks</Text>
             </View>
 
-            {/* Task List */}
             <FlatList
                 data={tasks}
                 renderItem={renderTask}
                 keyExtractor={(item) => item.id}
-                ItemSeparatorComponent={renderSeparator}
                 contentContainerStyle={styles.listContent}
             />
 
-            {/* Add Button */}
             <TouchableOpacity
                 style={styles.addButton}
                 onPress={() => setModalVisible(true)}
@@ -179,6 +204,42 @@ const TodolistScreen = () => {
                     </View>
                 </View>
             </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={deleteModalVisible}
+                onRequestClose={cancelDelete}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.deleteModalContent}>
+                        <Text style={styles.deleteModalTitle}>Delete Task</Text>
+                        <Text style={styles.deleteModalMessage}>
+                            Are you sure you want to delete this task?
+                        </Text>
+                        {taskToDelete && (
+                            <Text style={styles.deleteModalTaskText}>
+                                "{taskToDelete.text}"
+                            </Text>
+                        )}
+                        <View style={styles.modalButtons}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.cancelButton]}
+                                onPress={cancelDelete}
+                            >
+                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.deleteConfirmButton]}
+                                onPress={confirmDelete}
+                            >
+                                <Text style={styles.deleteConfirmButtonText}>Delete</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -206,8 +267,13 @@ const styles = StyleSheet.create({
     },
     taskItem: {
         flexDirection: "row",
-        alignItems: "flex-start",
+        alignItems: "center",
         paddingVertical: 20,
+    },
+    taskTouchable: {
+        flex: 1,
+        flexDirection: "row",
+        alignItems: "flex-start",
     },
     checkbox: {
         width: 24,
@@ -248,10 +314,12 @@ const styles = StyleSheet.create({
     timestampCompleted: {
         color: "#999999",
     },
-    separator: {
-        height: 1,
-        backgroundColor: "#555555",
-        opacity: 0.35,
+    deleteButton: {
+        padding: 8,
+        marginLeft: 8,
+    },
+    deleteIcon: {
+        fontSize: 20,
     },
     addButton: {
         position: "absolute",
@@ -330,6 +398,39 @@ const styles = StyleSheet.create({
         backgroundColor: "#51ACB4",
     },
     addTaskButtonText: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#FFFFFF",
+    },
+    deleteModalContent: {
+        backgroundColor: "#FFFFFF",
+        borderRadius: 16,
+        padding: 24,
+        width: "85%",
+        maxWidth: 400,
+    },
+    deleteModalTitle: {
+        fontSize: 24,
+        fontWeight: "bold",
+        color: "#111111",
+        marginBottom: 12,
+    },
+    deleteModalMessage: {
+        fontSize: 16,
+        color: "#555555",
+        marginBottom: 12,
+        lineHeight: 22,
+    },
+    deleteModalTaskText: {
+        fontSize: 16,
+        color: "#111111",
+        fontStyle: "italic",
+        marginBottom: 20,
+    },
+    deleteConfirmButton: {
+        backgroundColor: "#FF3B30",
+    },
+    deleteConfirmButtonText: {
         fontSize: 16,
         fontWeight: "600",
         color: "#FFFFFF",
