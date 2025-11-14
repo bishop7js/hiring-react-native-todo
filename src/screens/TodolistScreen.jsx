@@ -9,46 +9,12 @@ import {
     Modal,
     StatusBar,
 } from "react-native";
+import { useSelector, useDispatch } from 'react-redux';
+import { addTask, toggleTask, editTask, deleteTask } from '../store/tasksSlice';
 
 const TodolistScreen = () => {
-    const [tasks, setTasks] = useState([
-        {
-            id: "1",
-            text: "Layout about page",
-            timestamp: "about 1 hour ago",
-            completed: false,
-        },
-        {
-            id: "2",
-            text: "Color",
-            timestamp: "1 day ago",
-            completed: false,
-        },
-        {
-            id: "3",
-            text: "typo graphys",
-            timestamp: "3 days ago",
-            completed: false,
-        },
-        {
-            id: "4",
-            text: "6 starter",
-            timestamp: "6 days ago",
-            completed: false,
-        },
-        {
-            id: "5",
-            text: "meditate",
-            timestamp: "2 weeks ago",
-            completed: true,
-        },
-        {
-            id: "6",
-            text: "meditate",
-            timestamp: "2 weeks ago",
-            completed: true,
-        },
-    ]);
+    const tasks = useSelector((state) => state.tasks.tasks);
+    const dispatch = useDispatch();
 
     const [modalVisible, setModalVisible] = useState(false);
     const [editModalVisible, setEditModalVisible] = useState(false);
@@ -58,15 +24,11 @@ const TodolistScreen = () => {
     const [newTaskText, setNewTaskText] = useState("");
     const [editTaskText, setEditTaskText] = useState("");
 
-    const toggleTask = (id) => {
-        setTasks((prevTasks) =>
-            prevTasks.map((task) =>
-                task.id === id ? { ...task, completed: !task.completed } : task
-            )
-        );
+    const handleToggleTask = (id) => {
+        dispatch(toggleTask(id));
     };
 
-    const addTask = () => {
+    const handleAddTask = () => {
         if (newTaskText.trim()) {
             const newTask = {
                 id: Date.now().toString(),
@@ -74,7 +36,7 @@ const TodolistScreen = () => {
                 timestamp: "just now",
                 completed: false,
             };
-            setTasks((prevTasks) => [newTask, ...prevTasks]);
+            dispatch(addTask(newTask));
             setNewTaskText("");
             setModalVisible(false);
         }
@@ -88,13 +50,10 @@ const TodolistScreen = () => {
 
     const saveEdit = () => {
         if (editTaskText.trim() && taskToEdit) {
-            setTasks((prevTasks) =>
-                prevTasks.map((task) =>
-                    task.id === taskToEdit.id
-                        ? { ...task, text: editTaskText.trim(), timestamp: "edited just now" }
-                        : task
-                )
-            );
+            dispatch(editTask({
+                id: taskToEdit.id,
+                text: editTaskText.trim(),
+            }));
             setEditModalVisible(false);
             setTaskToEdit(null);
             setEditTaskText("");
@@ -114,9 +73,7 @@ const TodolistScreen = () => {
 
     const confirmDelete = () => {
         if (taskToDelete) {
-            setTasks((prevTasks) =>
-                prevTasks.filter((task) => task.id !== taskToDelete.id)
-            );
+            dispatch(deleteTask(taskToDelete.id));
             setDeleteModalVisible(false);
             setTaskToDelete(null);
         }
@@ -131,7 +88,7 @@ const TodolistScreen = () => {
         <View style={styles.taskItem}>
             <TouchableOpacity
                 style={styles.taskTouchable}
-                onPress={() => toggleTask(item.id)}
+                onPress={() => handleToggleTask(item.id)}
                 activeOpacity={0.7}
             >
                 <View
@@ -182,6 +139,13 @@ const TodolistScreen = () => {
         </View>
     );
 
+    const renderEmptyList = () => (
+        <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No tasks yet</Text>
+            <Text style={styles.emptySubText}>Tap the + button to add a new task</Text>
+        </View>
+    );
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" />
@@ -195,6 +159,7 @@ const TodolistScreen = () => {
                 renderItem={renderTask}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}
+                ListEmptyComponent={renderEmptyList}
             />
 
             <TouchableOpacity
@@ -235,7 +200,7 @@ const TodolistScreen = () => {
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.modalButton, styles.addTaskButton]}
-                                onPress={addTask}
+                                onPress={handleAddTask}
                             >
                                 <Text style={styles.addTaskButtonText}>Add</Text>
                             </TouchableOpacity>
@@ -339,6 +304,23 @@ const styles = StyleSheet.create({
     },
     listContent: {
         paddingHorizontal: 24,
+        flexGrow: 1,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        paddingVertical: 60,
+    },
+    emptyText: {
+        fontSize: 20,
+        fontWeight: "600",
+        color: "#999999",
+        marginBottom: 8,
+    },
+    emptySubText: {
+        fontSize: 16,
+        color: "#BBBBBB",
     },
     taskItem: {
         flexDirection: "row",
