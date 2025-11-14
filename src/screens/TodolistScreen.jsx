@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     View,
     Text,
@@ -8,12 +8,14 @@ import {
     TextInput,
     Modal,
     StatusBar,
+    ActivityIndicator,
 } from "react-native";
 import { useSelector, useDispatch } from 'react-redux';
-import { addTask, toggleTask, editTask, deleteTask } from '../store/tasksSlice';
+import { addTask, toggleTask, editTask, deleteTask, loadTasks } from '../store/tasksSlice';
 
 const TodolistScreen = () => {
     const tasks = useSelector((state) => state.tasks.tasks);
+    const loading = useSelector((state) => state.tasks.loading);
     const dispatch = useDispatch();
 
     const [modalVisible, setModalVisible] = useState(false);
@@ -23,6 +25,11 @@ const TodolistScreen = () => {
     const [taskToEdit, setTaskToEdit] = useState(null);
     const [newTaskText, setNewTaskText] = useState("");
     const [editTaskText, setEditTaskText] = useState("");
+
+    // Load tasks when component mounts
+    useEffect(() => {
+        dispatch(loadTasks());
+    }, [dispatch]);
 
     const handleToggleTask = (id) => {
         dispatch(toggleTask(id));
@@ -145,6 +152,16 @@ const TodolistScreen = () => {
             <Text style={styles.emptySubText}>Tap the + button to add a new task</Text>
         </View>
     );
+
+    // Show loading indicator while loading tasks
+    if (loading) {
+        return (
+            <View style={[styles.container, styles.centerContent]}>
+                <ActivityIndicator size="large" color="#51ACB4" />
+                <Text style={styles.loadingText}>Loading tasks...</Text>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
@@ -289,6 +306,15 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "#FFFFFF",
         paddingTop: 50,
+    },
+    centerContent: {
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    loadingText: {
+        marginTop: 16,
+        fontSize: 16,
+        color: "#555555",
     },
     header: {
         paddingHorizontal: 24,
